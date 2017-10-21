@@ -2,19 +2,19 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Posts on Stephen&#39;s Blog</title>
-    <link>https://keyganker.github.io/gitblog/post/</link>
+    <link>https://keyganker.github.io/post/</link>
     <description>Recent content in Posts on Stephen&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Sun, 16 Nov 2014 16:09:35 +0800</lastBuildDate>
-    <atom:link href="/gitblog/post/" rel="self" type="application/rss+xml" />
+    <atom:link href="/post/" rel="self" type="application/rss+xml" />
     
     <item>
       <title>php预防sql注入之PDO</title>
-      <link>https://keyganker.github.io/gitblog/post/php%E9%A2%84%E9%98%B2sql%E6%B3%A8%E5%85%A5%E4%B9%8Bpdo/</link>
+      <link>https://keyganker.github.io/post/php%E9%A2%84%E9%98%B2sql%E6%B3%A8%E5%85%A5%E4%B9%8Bpdo/</link>
       <pubDate>Sun, 16 Nov 2014 16:09:35 +0800</pubDate>
       
-      <guid>https://keyganker.github.io/gitblog/post/php%E9%A2%84%E9%98%B2sql%E6%B3%A8%E5%85%A5%E4%B9%8Bpdo/</guid>
+      <guid>https://keyganker.github.io/post/php%E9%A2%84%E9%98%B2sql%E6%B3%A8%E5%85%A5%E4%B9%8Bpdo/</guid>
       <description>SQL注入这个话题是老生常谈了，然而却依然不可忽视，尤其对于PHP这种“最接近用户”的语言来说，就显得尤为重要！
 现在我接触的一个项目使用了PHPCMS，而PHPCMS是使用mysqli的方式来连接数据库的，数据库操作的底层封装代码中对SQL注入的防范几乎没有（就是在字段两遍加反引号，在字段值两遍加引号），这样的框架使用起来让人感觉毫无安全感！那对于PHP来说如何做到防止SQL注入呢？方法很多种，最安全的当然是使用官方推荐的操作数据库的方式，那就是使用 PDO！
 PDO的好处 PDO不仅仅可以防止SQL注入，而且可以对SQL语句进行预编译，从而达到提高效率的地步，这里我们focus在防注入的处理上。

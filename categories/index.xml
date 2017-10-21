@@ -2,18 +2,18 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Categories on Stephen&#39;s Blog</title>
-    <link>https://keyganker.github.io/gitblog/categories/</link>
+    <link>https://keyganker.github.io/categories/</link>
     <description>Recent content in Categories on Stephen&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <atom:link href="/gitblog/categories/" rel="self" type="application/rss+xml" />
+    <atom:link href="/categories/" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Php</title>
-      <link>https://keyganker.github.io/gitblog/categories/php/</link>
+      <link>https://keyganker.github.io/categories/php/</link>
       <pubDate>Sun, 16 Nov 2014 16:09:35 +0800</pubDate>
       
-      <guid>https://keyganker.github.io/gitblog/categories/php/</guid>
+      <guid>https://keyganker.github.io/categories/php/</guid>
       <description></description>
     </item>
     
