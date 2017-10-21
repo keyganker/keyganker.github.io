@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="generator" content="Hugo 0.30.2" />
+    <link rel="shortcut icon" href="/gitblog/images/favicon.ico">
+    <link href="https://keyganker.github.io/gitblog/index.xml" rel="alternate" type="application/rss+xml" title="Stephen&#39;s Blog" />
+    
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
+    
+    <script src="https://apis.google.com/js/platform.js" async defer>{lang: 'ja'}</script>
+    
+    <link rel="stylesheet" href="https://yandex.st/highlightjs/8.0/styles/default.min.css">
+    <script src="https://yandex.st/highlightjs/8.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+    <link rel="stylesheet" type="text/css" href="/gitblog/css/style.css">
+    <title>php预防sql注入之PDO | Stephen&#39;s Blog</title>
+  </head>
+  <body>
+    <div id="wrap">
+      
+      <header class="site-header">
+        <div class="site-header-left">
+          <a class="site-header-title" href="https://keyganker.github.io/gitblog">Stephen&#39;s Blog</a>
+        </div>
+      </header>
+      <div class="container">
+        <div id="main">
+
+<div class="article">
+  <header>
+    <div class="article-header">
+      <h1>php预防sql注入之PDO</h1>
+      <div class="article-meta">
+        <span class="posttime">2014/11/16</span>
+        
+<div class="tags">
+  <ul>
+    
+    <li>
+        <a href="/gitblog/tags/php">php</a>
+    </li>
+    
+  </ul>
+</div>
+
+
+      </div>
+    </div>
+    
+
+  </header>
+  <div class="content">
+    
+
+<p>SQL注入这个话题是老生常谈了，然而却依然不可忽视，尤其对于PHP这种“最接近用户”的语言来说，就显得尤为重要！</p>
+
+<p>现在我接触的一个项目使用了PHPCMS，而PHPCMS是使用mysqli的方式来连接数据库的，数据库操作的底层封装代码中对SQL注入的防范几乎没有（就是在字段两遍加反引号，在字段值两遍加引号），这样的框架使用起来让人感觉毫无安全感！那对于PHP来说如何做到防止SQL注入呢？方法很多种，最安全的当然是使用官方推荐的操作数据库的方式，那就是使用 <strong>PDO</strong>！</p>
+
+<h2 id="pdo的好处">PDO的好处</h2>
+
+<p>PDO不仅仅可以防止SQL注入，而且可以对SQL语句进行预编译，从而达到提高效率的地步，这里我们focus在防注入的处理上。</p>
+
+<p>首先我们要知道PDO是如何防注入的？这里先介绍一下PDO中的一个参数：</p>
+
+<p><strong>PDO::ATTR_EMULATE_PREPARES</strong> Enables or disables emulation of prepared statements. Some drivers do not support native prepared statements or have limited support for them. Use this setting to force PDO to either always emulate prepared statements (if TRUE), or to try to use native prepared statements (if FALSE). It will always fall back to emulating the prepared statement if the driver cannot successfully prepare the current query</p>
+
+<p>上面讲的很清楚，该参数如果设置true，则PDO会模拟预编译，设置为false则使用驱动的本地预编译。然而并不是所有的驱动都支持本地预编译，所以如果本地驱动不支持，则会始终使用PDO模拟预编译。</p>
+
+<h2 id="测试">测试</h2>
+
+<p>先来看一段代码：</p>
+
+<pre><code>&lt;?php
+    $pdo = new PDO(&quot;mysql:host=192.168.1.104;dbname=mffc;charset=utf8&quot;,&quot;feng&quot;, &quot;feng&quot;);
+    $st = $pdo-&gt;prepare(&quot;select * from articles where id =?&quot;);
+    $id = 21;
+    $st-&gt;bindParam(1,$id);
+    $st-&gt;execute();
+    $st-&gt;fetchAll();
+?&gt;
+</code></pre>
+
+<p>这段代码使用了PDO的<code>prepare()</code>方法来对代码进行预编译，然后绑定参数，执行SQL，是不是完美了呢？当然不是了，我们使用wireshark进行抓包看到如下信息：</p>
+
+<p><img src="/images/20141116/1.png" alt="抓包图片1" /></p>
+
+<p>由此可见PHP是将SQL拼接好之后传递给MYSQL来做处理的，明显这样做是无法做到防止SQL注入的，那我们加上上面的参数再看一下：</p>
+
+<pre><code>&lt;?php
+    $pdo = new PDO(&quot;mysql:host=192.168.1.104;dbname=mffc;charset=utf8&quot;,&quot;feng&quot;, &quot;feng&quot;);
+    $pdo-&gt;setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+    $st = $pdo-&gt;prepare(&quot;select * from articles where id =?&quot;);
+    $id = 21;
+    $st-&gt;bindParam(1,$id);
+    $st-&gt;execute();
+    $st-&gt;fetchAll();
+?&gt;
+</code></pre>
+
+<p>看一下抓包结果：</p>
+
+<p>第一张图：
+<img src="/images/20141116/2.png" alt="抓包图片2" /></p>
+
+<p>第二张图：
+<img src="/images/20141116/3.png" alt="抓包图片3" /></p>
+
+<p>这里我们看到有两个关键的包：</p>
+
+<pre><code>60437   14106.556003    192.168.1.101   192.168.1.104   MySQL   93  Request Prepare Statement
+60440   14106.765573    192.168.1.101   192.168.1.104   MySQL   75  Request Execute Statement
+</code></pre>
+
+<p>首先第一个包是发送的预编译的SQL模板：</p>
+
+<pre><code>Request Command Prepare Statement
+Command: Prepare Statement (22)
+select * from articles where id =?
+</code></pre>
+
+<p>第二个包是发送的参数信息：</p>
+
+<pre><code>Request Command Execute Statement
+Command: Execute Statement (23)
+Statement ID: 1
+</code></pre>
+
+<p>由此可见SQL语句模板和参数是分开两次传递的，编译的工作交给了驱动来做，从而避免了SQL注入。</p>
+
+<p>以上通过介绍了如何使用PDO来避免SQL注入，大概就是这些了，还有一些PHP版本和其他需要注意的地方，请参考<a href="http://zhangxugg-163-com.iteye.com/blog/1835721">PDO防注入原理分析以及使用PDO的注意事项</a>。</p>
+
+<h2 id="注意事项">注意事项：</h2>
+
+<ol>
+<li><p>php升级到5.3.6+，生产环境强烈建议升级到php 5.3.9+ php 5.4+，php 5.3.8存在致命的hash碰撞漏洞。</p></li>
+
+<li><p>若使用php 5.3.6+, 请在在PDO的DSN中指定charset属性</p></li>
+
+<li><p>如果使用了PHP 5.3.6及以前版本，设置<code>PDO::ATTR_EMULATE_PREPARES</code>参数为<code>false</code>（即由MySQL进行变量处理），php 5.3.6以上版本已经处理了这个问题，无论是使用本地模拟prepare还是调用mysql server的prepare均可。在DSN中指定<code>charset</code>是无效的，同时<code>set names &lt;charset&gt;</code>的执行是必不可少的。</p></li>
+
+<li><p>如果使用了PHP 5.3.6及以前版本, 因Yii框架默认并未设置ATTR_EMULATE_PREPARES的值，请在数据库配置文件中指定emulatePrepare的值为false。</p></li>
+</ol>
+
+<p>那么，有个问题，如果在DSN中指定了charset, 是否还需要执行<code>set names &lt;charset&gt;</code>呢？
+是的，不能省。<code>set names &lt;charset&gt;</code>其实有两个作用：
+A.  告诉mysql server, 客户端（PHP程序）提交给它的编码是什么
+B.  告诉mysql server, 客户端需要的结果的编码是什么
+也就是说，如果数据表使用gbk字符集，而PHP程序使用UTF-8编码，我们在执行查询前运行set names utf8, 告诉mysql server正确编码即可，无须在程序中编码转换。这样我们以utf-8编码提交查询到mysql server, 得到的结果也会是utf-8编码。省却了程序中的转换编码问题，不要有疑问，这样做不会产生乱码。</p>
+
+<p>那么在DSN中指定charset的作用是什么? 只是告诉PDO, 本地驱动转义时使用指定的字符集（并不是设定mysql server通信字符集），设置mysql server通信字符集，还得使用<code>set names &lt;charset&gt;</code>指令。</p>
+
+<h2 id="参考资料">参考资料</h2>
+
+<p>PDO防注入原理分析以及使用PDO的注意事项：<a href="http://zhangxugg-163-com.iteye.com/blog/1835721">http://zhangxugg-163-com.iteye.com/blog/1835721</a><br />
+stackoverflow: <a href="http://stackoverflow.com/questions/60174/how-can-i-prevent-sql-injection-in-php/60496#60496">http://stackoverflow.com/questions/60174/how-can-i-prevent-sql-injection-in-php/60496#60496</a></p>
+
+  </div>
+  <footer>
+    <div class="article-footer">
+      
+<div class="tags">
+  <ul>
+    
+    <li>
+        <a href="/gitblog/tags/php">php</a>
+    </li>
+    
+  </ul>
+</div>
+
+
+      
+      
+
+      
+      
+    </div>
+  </footer>
+</div>
+        </div>
+        <div class="sidebar">
+  
+  
+  <div class="sidebar-content">
+    <div class="sidebar-header">
+      <span>Author</span>
+    </div>
+    <div id="author">
+      <span>Stephen</span>
+      <div>
+        
+        
+        <a href="https://github.com/keyganker"><i class="fa fa-github-square fa-2x" aria-hidden="true"></i></a>
+        
+        
+        
+      </div>
+    </div>
+  </div>
+  
+  
+  <div class="sidebar-content">
+    <div class="sidebar-header">
+      <span>Categories</span>
+    </div>
+    <div class="categories">
+      <ul>
+        
+        <li>
+          <a href="/gitblog/categories/php"><span></span>php (1)</a>
+        </li>
+        
+      </ul>
+    </div>
+  </div>
+  
+  <div class="sidebar-content">
+    <div class="sidebar-header">
+      <span>RSS</span>
+    </div>
+    <div id="rss">
+      <a href="https://keyganker.github.io/gitblog/index.xml" type="application/rss+xml" target="_blank">
+        <i class="fa fa-rss-square fa-2x" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+</div>
+
+      </div>
+      <footer>
+        <div id="site-footer-wrap">
+          <div id="site-footer">
+            <span>Powered by <a href="https://gohugo.io/">Hugo</a>.</span>
+            <span>
+              
+              Copyright (c) 2014, <a href="https://keyganker.github.io/gitblog">Stephen&#39;s Blog</a>
+              
+            </span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>
+

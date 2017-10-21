@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
+  <url>
+    <loc>https://keyganker.github.io/gitblog/post/php%E9%A2%84%E9%98%B2sql%E6%B3%A8%E5%85%A5%E4%B9%8Bpdo/</loc>
+    <lastmod>2014-11-16T16:09:35+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://keyganker.github.io/gitblog/categories/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://keyganker.github.io/gitblog/tags/php/</loc>
+    <lastmod>2014-11-16T16:09:35+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://keyganker.github.io/gitblog/categories/php/</loc>
+    <lastmod>2014-11-16T16:09:35+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://keyganker.github.io/gitblog/post/</loc>
+    <lastmod>2014-11-16T16:09:35+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://keyganker.github.io/gitblog/</loc>
+    <lastmod>2014-11-16T16:09:35+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://keyganker.github.io/gitblog/tags/</loc>
+    <lastmod>2014-11-16T16:09:35+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+</urlset>
