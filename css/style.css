@@ -81,7 +81,8 @@ a:hover {
  * articles
  */
 .article {
-  width: 590px;
+  /*width: 590px;*/
+  width:650px;
   padding: 0px 20px 20px 20px;
   clear: left;
   overflow: hidden;
@@ -565,6 +566,24 @@ h4:before {
   font-size: 14px;
 }
 
+
+ #TableOfContents {
+    position:fixed;
+    left:30px;
+    top:120px;
+ }
+ 
+ #TableOfContents li{
+  list-style-type: circle;
+  max-width: 120px;
+ }
+
+#TableOfContents li.current{
+  list-style-type: disc;
+  font-weight: bold;
+  font-style: oblique;
+ }
+
 /**
  * responsive styles
  */
@@ -634,6 +653,12 @@ h4:before {
   #articles-list-header h1 {
     padding-left: 10px;
   }
+}
+
+@media screen and (max-width: 1200px) {
+   #TableOfContents {
+    display: none;
+ }
 }
 
 @media screen and (max-width: 600px) {

@@ -132,7 +132,7 @@ Statement ID: 1
 
 <p>以上通过介绍了如何使用PDO来避免SQL注入，大概就是这些了，还有一些PHP版本和其他需要注意的地方，请参考<a href="http://zhangxugg-163-com.iteye.com/blog/1835721">PDO防注入原理分析以及使用PDO的注意事项</a>。</p>
 
-<h2 id="注意事项">注意事项：</h2>
+<h2 id="注意事项">注意事项</h2>
 
 <ol>
 <li><p>php升级到5.3.6+，生产环境强烈建议升级到php 5.3.9+ php 5.4+，php 5.3.8存在致命的hash碰撞漏洞。</p></li>
@@ -158,6 +158,17 @@ B.  告诉mysql server, 客户端需要的结果的编码是什么
 stackoverflow: <a href="http://stackoverflow.com/questions/60174/how-can-i-prevent-sql-injection-in-php/60496#60496">http://stackoverflow.com/questions/60174/how-can-i-prevent-sql-injection-in-php/60496#60496</a></p>
 
   </div>
+ <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#pdo的好处">PDO的好处</a></li>
+<li><a href="#测试">测试</a></li>
+<li><a href="#注意事项">注意事项</a></li>
+<li><a href="#参考资料">参考资料</a></li>
+</ul></li>
+</ul>
+</nav>
   <footer>
     <div class="article-footer">
       
@@ -246,3 +257,18 @@ stackoverflow: <a href="http://stackoverflow.com/questions/60174/how-can-i-preve
   </body>
 </html>
 
+<script>
+  
+document.getElementById("TableOfContents").addEventListener("click", function(e){
+  var lis = e.target.parentNode.parentNode.childNodes;
+  for(item in lis) {
+    lis[item].className = '';
+  }
+  if (e.target.nodeName == 'A') {
+      e.target.parentNode.className='current';
+  }
+
+});
+
+
+</script>
