@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Redis on Stephen&#39;s Blog</title>
+    <link>https://keyganker.github.io/tags/redis/</link>
+    <description>Recent content in Redis on Stephen&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 03 Mar 2018 23:17:15 +0800</lastBuildDate>
+    <atom:link href="/tags/redis/" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Redis过期策略</title>
+      <link>https://keyganker.github.io/post/redis-expired/</link>
+      <pubDate>Sat, 03 Mar 2018 23:17:15 +0800</pubDate>
+      
+      <guid>https://keyganker.github.io/post/redis-expired/</guid>
+      <description> Redis和Memached是目前最流行的in-memory DB，它丰富的功能为广大程序员所爱，而可以为数据设置过期时间（Expired time）是应用最多的特性之一。本篇博客来回顾一下redis的数据Expired策略；
+与过期有关的几个命令 与Expired相关的命令有以下几个：
+命令 | 含义
+EXPIRE | 为某个key设置过期时间，单位秒
+PEXIRE | 为每个key设置过期时间，单位毫秒（2.6之后支持
+EXPIREAT | 为某个key指定未来的某个时间点过期，精度到秒
+EXPIREAT | 为某个key指定未来的某个时间点过期，精度到毫秒
+PERSIST | 将某个key上的过期时间删除
+另外还有1个命令也会影响到key上的过期时间：
+ RENAME RENAME用来把keyA重命名为keyB，如果已经存在keyB，则覆盖keyB；这里注意，重命名后的keyB会继承keyA的所有特性。例如：原来存在没有过期时间的keyB，从命名带过期时间的keyA为keyB后，除了keyB的value会被覆盖，并且keyB也会带上keyA的过期时间。  还有几个规则需要注意：
+ 如果给某个key设置一个过去的过期时间，那么这个key会被立刻执行delete操作，而不是expired；这里有个细节，在redis内部delete和expired是不等价的，二者对应不同的event，expired的数据并不一定被delete了，下面了解了redis expired策略后会更清晰 所有执行删除（delete）key、覆盖（overwrite）key的value操作的命令会清除掉key上的过期时间（注意RENAME不在此规则中，RENAME是继承原来key的属性，可能是清除，也可能是添加）；如：DEL、SET、GETSET以及所有*STORE命令。 同样的，改变（alter）key的value不会清除key上的过期时间，例如：INCR、LPUSH、HSET。  Redis的过期实现 这里不谈源码，根据官方文档说明，无论你用的是上面提到的哪个命令为key设置过期时间，redis内部都是通过为key设置一个绝对的unix时间戳来实现有效期的。这也就意味着，为key设置完时间戳之后，即使把redis实例关掉，key的有效时间依然在流逝，等过了有效时间再次启动redis实例后key也依然已经过期了。
+由此也可以得出，redis key的过期实现严重依赖服务器的时钟，一旦时钟紊乱，则会造成意想不到的结果。例如为key设置1000s的有效时间，然后把时钟调快500s，那么key的有效时间就只剩下 500s了。
+过期策略 那么有效期到了之后，redis是如何执行过期操作的呢？
+主要有两种策略：被动策略和主动策略
+被动策略 当key被访问的时候，如果key已经过期，则会执行删除操作，客户端返回key不存在
+主动策略 周期性的执行以下操作：
+ 从所有有过期时间的key中随机去20个 删除这20个key中所有已过期的key 如果第2步中有超过25%的key被删除了，则直接进入下一个循环周期  主动策略的目的是把已经过期的key数量控制在所有带过期时间的key总数的25%以下，这是对被动策略的一个有效补充，试想如果只有被动策略，那么如果有些key过期之后再也没有被访问，岂不是会一直不被删除从而白白占用内存。
+过期和复制 为了服务的的高可用，redis支持复制功能，即slave会持续不断的同步master的状态；那么redis中key的expired状态是如何同步的呢？
+首先，redis slave和master之间的同步分为两种：全量同步和增量同步；而增量同步的实现就是把master上执行的所有命令一条条发到slave重放一遍；但是key的expired并没有命令触发，而redis为了保证master和slave之间数据的一致性，会在上一节中提到的过期策略中，key的expired被触发执行delete操作的同时，生成一条DEL命令发到slave上，从而保证slave上的过期数据也被删除。
+但是这里有一个坑：如果master上的key已经过期，但是由于主从之间的不同步，会存在slave上的key可能还没删除，这个时候会发生神奇的现象：从master上get key返回不存在，从slave上get key却返回了值！ 不过在redis3.2的版本中，作者修复了这个问题，即在slave上，访问某个key的时候，redis会根据本地的时钟来检查这个key时候已经过期，如果过期则不会返回它的值。
+参考资料  https://redis.io/commands/expire https://engineering.grab.com/a-key-expired-in-redis-you-wont-believe-what-happened-next https://github.com/antirez/redis/issues/1768  </description>
+    </item>
+    
+  </channel>
+</rss>

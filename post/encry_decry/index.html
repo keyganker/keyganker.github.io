@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="generator" content="Hugo 0.30.2" />
+    <link rel="shortcut icon" href="/images/favicon.ico">
+    <link href="https://keyganker.github.io/index.xml" rel="alternate" type="application/rss+xml" title="Stephen&#39;s Blog" />
+    
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
+    
+    <script src="https://apis.google.com/js/platform.js" async defer>{lang: 'ja'}</script>
+    
+    <link rel="stylesheet" href="https://yandex.st/highlightjs/8.0/styles/default.min.css">
+    <script src="https://yandex.st/highlightjs/8.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+    <link rel="stylesheet" type="text/css" href="/css/style.css">
+    <title>密钥格式 | Stephen&#39;s Blog</title>
+  </head>
+  <body>
+    <div id="wrap">
+      
+      <header class="site-header">
+        <div class="site-header-left">
+          <a class="site-header-title" href="https://keyganker.github.io">Stephen&#39;s Blog</a>
+        </div>
+      </header>
+      <div class="container">
+        <div id="main">
+
+<div class="article">
+  <header>
+    <div class="article-header">
+      <h1>密钥格式</h1>
+      <div class="article-meta">
+        <span class="posttime">2014/11/16</span>
+        
+<div class="tags">
+  <ul>
+    
+    <li>
+        <a href="/tags/rsa">RSA</a>
+    </li>
+    
+    <li>
+        <a href="/tags/ssl/tsl">SSL/TSL</a>
+    </li>
+    
+    <li>
+        <a href="/tags/openssh">OPENSSH</a>
+    </li>
+    
+  </ul>
+</div>
+
+
+      </div>
+    </div>
+    
+
+  </header>
+  <div class="content">
+    
+
+<h2 id="从ssh说起">从ssh说起</h2>
+
+<p>现代各种通信计算的安全依赖各种加密算法，最著名的莫过于<code>RSA</code>加密算法，它被广泛应用于各种通信技术，如：ssl／tsl，ssh等
+在实际工作当中，我们应用RSA加密技术最多的地方莫过于<code>ssh</code>, 比如github；大家都知道使用ssh首先要通过ssh-keygen生成一对密钥，常用的命令如下：</p>
+
+<p><code>ssh-keygen -t rsa -C &quot;$(whoami)@$(hostname)-$(date -I)&quot;</code></p>
+
+<p>这个命令就是生成基于rsa加密算法的一对密钥，这个时候把公钥放到github上，就可以基于ssh协议clone代码了。</p>
+
+<p>说到这里我们提到了两个概念：<code>协议</code> 和 <code>加密算法</code>，协议规定如何通信以及使用什么类型的加密技术，比如这里使用的是非对称加密算法，而具体采用哪种加密非对称加密算法则要看实现如何支持了。
+还是拿ssh举例，其实openssh目前支持的密钥生成算法不止<code>rsa</code>，还有dsa和ecdsa（椭圆曲线数字签名算法），甚至它目前推荐的密钥生成算法都不是<code>rsa</code>，而是<code>ecdsa</code>，具体它是如何实现以及和<code>rsa</code>有什么区别不是本文讨论的范畴，我们只需要知道它也是一种<code>非对称加密算法</code>就可以了，而且基于<code>ecdsa</code>算法生成的密钥更小，安全度更高。</p>
+
+<p>注：在GNOME中，由于<a href="https://bugzilla.gnome.org/show_bug.cgi?id=641082">这个bug</a>的原因导致<code>Gnome Keyring</code>无法支持ecdsa，但是已经在<a href="https://bugzilla.gnome.org/attachment.cgi?id=357692">这个patch</a>中修复了（居然从发现到修复隔了6年半，这是有多不重视ecdsa啊，不过由此也可见rsa的统治地位。。。）</p>
+
+<p>好了，回到开始生成密钥的地方，这里生成的一对密钥文件名通常为<code>id_rsa</code>和<code>id_rsa.pub</code>，前者为私钥，后者为公钥；
+到这里不知道大家有没有想过，这对密钥我们可以在程序中用来加解密、解密数据吗？比如使用php的openssl系列函数，或者java的Cipher类？</p>
+
+<p>答案是不能。</p>
+
+<p>你可能会想，这不是生成的rsa密钥吗？为什么不能用来加、解密数据？先不着急，我们先看看这两个密钥有什么特点。</p>
+
+<p>首先打开这两个文件，细心的你会发现，两个文件的格式有很大不同，私钥会有一对header和footer：</p>
+
+<pre><code>-----BEGIN RSA PRIVATE KEY-----
+BASE64 ENCODED DATA
+-----END RSA PRIVATE KEY-----
+
+</code></pre>
+
+<p>而公钥却没有，并且是以ssh-rsa开头的，这和我们通常认知中的有点不同，通常我们看到的私钥和公钥不是都应该有一对header/footer吗？这里<code>ssh-keygen</code>生成的为什么是这样的？</p>
+
+<p>你猜对了，这里的公钥是ssh专用的一种密钥格式，它不与其他格式如<code>pkcs</code>系列兼容；而私钥使用的格式则是pkcs#1，是我们经常使用一种密钥格式之一。
+那是不是<code>ssh-keygen</code>生成的密钥就不能用于<code>openssl</code>系列函数？</p>
+
+<p>答案是否定的，我们可以通过以下命令将ssh专用的公钥格式转换为其他格式，如：pkcs#1 或 pkcs#8:</p>
+
+<p><code>ssh-keygen -f id_rsa.pub -e -m pem</code></p>
+
+<p>或</p>
+
+<p><code>ssh-keygen -f id_rsa.pub -e -m pkcs8</code></p>
+
+<p>转换之后，我们就可以用原来的私钥和转换后的公钥加解密数据了。</p>
+
+<h2 id="密钥和格式">密钥和格式</h2>
+
+<p>刚才提到了密钥格式，那么密钥格式都有哪些呢？常用的是哪几种呢？比如apache、nginx支持的是什么格式，php、java通常使用的是哪种格式？</p>
+
+  </div>
+ <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#从ssh说起">从ssh说起</a></li>
+<li><a href="#密钥和格式">密钥和格式</a></li>
+</ul></li>
+</ul>
+</nav>
+  <footer>
+    <div class="article-footer">
+      
+<div class="tags">
+  <ul>
+    
+    <li>
+        <a href="/tags/rsa">RSA</a>
+    </li>
+    
+    <li>
+        <a href="/tags/ssl/tsl">SSL/TSL</a>
+    </li>
+    
+    <li>
+        <a href="/tags/openssh">OPENSSH</a>
+    </li>
+    
+  </ul>
+</div>
+
+
+      
+      
+
+      
+      
+      <div id="pagenavigation-next-prev">
+        
+        
+        <div id="pagenavigation-prev">
+          <span class="pagenav-label">Next</span>
+          <a href="https://keyganker.github.io/post/php%E9%A2%84%E9%98%B2sql%E6%B3%A8%E5%85%A5%E4%B9%8Bpdo/">php预防sql注入之PDO</a>
+        </div>
+        
+      </div>
+      
+    </div>
+  </footer>
+</div>
+        </div>
+        <div class="sidebar">
+  
+  
+  <div class="sidebar-content">
+    <div class="sidebar-header">
+      <span>Author</span>
+    </div>
+    <div id="author">
+      <span>Stephen</span>
+      <div>
+        
+        
+        <a href="https://github.com/keyganker"><i class="fa fa-github-square fa-2x" aria-hidden="true"></i></a>
+        
+        
+        
+      </div>
+    </div>
+  </div>
+  
+  
+  <div class="sidebar-content">
+    <div class="sidebar-header">
+      <span>Categories</span>
+    </div>
+    <div class="categories">
+      <ul>
+        
+        <li>
+          <a href="/categories/openssh"><span></span>openssh (1)</a>
+        </li>
+        
+        <li>
+          <a href="/categories/php"><span></span>php (1)</a>
+        </li>
+        
+        <li>
+          <a href="/categories/redis"><span></span>redis (1)</a>
+        </li>
+        
+        <li>
+          <a href="/categories/rsa"><span></span>rsa (1)</a>
+        </li>
+        
+        <li>
+          <a href="/categories/sql"><span></span>sql (1)</a>
+        </li>
+        
+        <li>
+          <a href="/categories/ssltsl"><span></span>ssltsl (1)</a>
+        </li>
+        
+      </ul>
+    </div>
+  </div>
+  
+  <div class="sidebar-content">
+    <div class="sidebar-header">
+      <span>RSS</span>
+    </div>
+    <div id="rss">
+      <a href="https://keyganker.github.io/index.xml" type="application/rss+xml" target="_blank">
+        <i class="fa fa-rss-square fa-2x" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+</div>
+
+      </div>
+      <footer>
+        <div id="site-footer-wrap">
+          <div id="site-footer">
+            <span>Powered by <a href="https://gohugo.io/">Hugo</a>.</span>
+            <span>
+              
+              Copyright (c) 2018, <a href="https://keyganker.github.io">Stephen&#39;s Blog</a>
+              
+            </span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>
+
+<script>
+  
+document.getElementById("TableOfContents").addEventListener("click", function(e){
+  var lis = e.target.parentNode.parentNode.childNodes;
+  for(item in lis) {
+    lis[item].className = '';
+  }
+  if (e.target.nodeName == 'A') {
+      e.target.parentNode.className='current';
+  }
+
+});
+
+
+</script>

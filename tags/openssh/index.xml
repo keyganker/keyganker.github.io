@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Openssh on Stephen&#39;s Blog</title>
+    <link>https://keyganker.github.io/tags/openssh/</link>
+    <description>Recent content in Openssh on Stephen&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 16 Nov 2014 16:09:35 +0800</lastBuildDate>
+    <atom:link href="/tags/openssh/" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>密钥格式</title>
+      <link>https://keyganker.github.io/post/encry_decry/</link>
+      <pubDate>Sun, 16 Nov 2014 16:09:35 +0800</pubDate>
+      
+      <guid>https://keyganker.github.io/post/encry_decry/</guid>
+      <description>从ssh说起 现代各种通信计算的安全依赖各种加密算法，最著名的莫过于RSA加密算法，它被广泛应用于各种通信技术，如：ssl／tsl，ssh等 在实际工作当中，我们应用RSA加密技术最多的地方莫过于ssh, 比如github；大家都知道使用ssh首先要通过ssh-keygen生成一对密钥，常用的命令如下：
+ssh-keygen -t rsa -C &amp;quot;$(whoami)@$(hostname)-$(date -I)&amp;quot;
+这个命令就是生成基于rsa加密算法的一对密钥，这个时候把公钥放到github上，就可以基于ssh协议clone代码了。
+说到这里我们提到了两个概念：协议 和 加密算法，协议规定如何通信以及使用什么类型的加密技术，比如这里使用的是非对称加密算法，而具体采用哪种加密非对称加密算法则要看实现如何支持了。 还是拿ssh举例，其实openssh目前支持的密钥生成算法不止rsa，还有dsa和ecdsa（椭圆曲线数字签名算法），甚至它目前推荐的密钥生成算法都不是rsa，而是ecdsa，具体它是如何实现以及和rsa有什么区别不是本文讨论的范畴，我们只需要知道它也是一种非对称加密算法就可以了，而且基于ecdsa算法生成的密钥更小，安全度更高。
+注：在GNOME中，由于这个bug的原因导致Gnome Keyring无法支持ecdsa，但是已经在这个patch中修复了（居然从发现到修复隔了6年半，这是有多不重视ecdsa啊，不过由此也可见rsa的统治地位。。。）
+好了，回到开始生成密钥的地方，这里生成的一对密钥文件名通常为id_rsa和id_rsa.pub，前者为私钥，后者为公钥； 到这里不知道大家有没有想过，这对密钥我们可以在程序中用来加解密、解密数据吗？比如使用php的openssl系列函数，或者java的Cipher类？
+答案是不能。
+你可能会想，这不是生成的rsa密钥吗？为什么不能用来加、解密数据？先不着急，我们先看看这两个密钥有什么特点。
+首先打开这两个文件，细心的你会发现，两个文件的格式有很大不同，私钥会有一对header和footer：
+-----BEGIN RSA PRIVATE KEY----- BASE64 ENCODED DATA -----END RSA PRIVATE KEY-----  而公钥却没有，并且是以ssh-rsa开头的，这和我们通常认知中的有点不同，通常我们看到的私钥和公钥不是都应该有一对header/footer吗？这里ssh-keygen生成的为什么是这样的？
+你猜对了，这里的公钥是ssh专用的一种密钥格式，它不与其他格式如pkcs系列兼容；而私钥使用的格式则是pkcs#1，是我们经常使用一种密钥格式之一。 那是不是ssh-keygen生成的密钥就不能用于openssl系列函数？
+答案是否定的，我们可以通过以下命令将ssh专用的公钥格式转换为其他格式，如：pkcs#1 或 pkcs#8:
+ssh-keygen -f id_rsa.pub -e -m pem
+或
+ssh-keygen -f id_rsa.pub -e -m pkcs8
+转换之后，我们就可以用原来的私钥和转换后的公钥加解密数据了。
+密钥和格式 刚才提到了密钥格式，那么密钥格式都有哪些呢？常用的是哪几种呢？比如apache、nginx支持的是什么格式，php、java通常使用的是哪种格式？</description>
+    </item>
+    
+  </channel>
+</rss>
